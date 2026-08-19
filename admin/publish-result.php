@@ -885,24 +885,26 @@ $semester_result =
             class="col-md-10 p-5"
         >
 
+<div class="mb-4">
 
-            <div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
 
-                <div class="page-title">
+        <div class="page-title">
+            🎓 Final Result Publish
+        </div>
 
-                    🎓  Final Result Publish
+        <a href="dashboard.php" class="btn btn-primary btn-lg">
+            ← Back
+        </a>
 
-                </div>
+    </div>
 
+    <p class="text-muted fs-5">
+        Select Department and Semester to publish
+        all student results at once.
+    </p>
 
-                <p class="text-muted fs-5">
-
-                    Select Department and Semester to publish
-                    all student results at once.
-
-                </p>
-
-            </div>
+</div>
 
 
 

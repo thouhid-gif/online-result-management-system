@@ -1086,45 +1086,53 @@ body {
 
     <!-- TOP BAR -->
 
-    <div class="topbar">
+    
+<div class="topbar">
 
+    <div>
 
-        <div>
+        <div class="d-flex align-items-center gap-3">
 
-            <h3>
+            <a href="dashboard.php"
+               class="btn btn-outline-primary">
 
-                <i class="fa-solid fa-users text-primary"></i>
+                <i class="fa-solid fa-arrow-left"></i>
+                Back
 
-                Course Students
+            </a>
 
-            </h3>
+            <div>
 
+                <h3>
+                    <i class="fa-solid fa-users text-primary"></i>
+                    Course Students
+                </h3>
 
-            <div class="subtitle">
-
-                View students and add their course result
+                <div class="subtitle">
+                    View students and add their course result
+                </div>
 
             </div>
 
         </div>
 
+    </div>
 
-        <div class="student-count">
 
-            <i class="fa-solid fa-user-graduate"></i>
+    <div class="student-count">
 
-            <?= $total_students ?>
+        <i class="fa-solid fa-user-graduate"></i>
 
-            <?= ($total_students == 1)
-                ? 'Student'
-                : 'Students'
-            ?>
+        <?= $total_students ?>
 
-        </div>
-
+        <?= ($total_students == 1)
+            ? 'Student'
+            : 'Students'
+        ?>
 
     </div>
 
+</div>
 
 
     <!-- =====================================

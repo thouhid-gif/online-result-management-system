@@ -132,11 +132,23 @@ padding:20px;
 <body>
 <div class="main">
 
-<h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
 
-Student Management
+    <div>
+        <h2 class="mb-0">
+            <i class="fa fa-user-graduate"></i>
+            Student Management
+        </h2>
+    </div>
 
-</h2>
+    <div>
+        <a href="dashboard.php" class="btn btn-secondary">
+            <i class="fa fa-arrow-left"></i>
+            Back
+        </a>
+    </div>
+
+</div>
 
 <hr>
 
