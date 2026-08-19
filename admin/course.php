@@ -21,6 +21,7 @@ if(isset($_POST['add_course']))
     $department_id = $_POST['department_id'];
 
     $semester_id = $_POST['semester_id'];
+    $credit = (float)$_POST['credit'];
 
     $check=mysqli_query($conn,
 
@@ -44,13 +45,14 @@ if(isset($_POST['add_course']))
         mysqli_query($conn,
 
         "INSERT INTO courses
-        (course_name,department_id,semester_id)
+        (course_name,department_id,semester_id,credit)
 
         VALUES
 
         ('$course_name',
         '$department_id',
-        '$semester_id')");
+        '$semester_id',
+        '$credit')");
 
         $message="Course Added Successfully.";
 
@@ -250,6 +252,24 @@ required>
 
 </div>
 
+<div class="col-md-4">
+
+<label>Course Credit</label>
+
+<select name="credit" class="form-select" required>
+<option value="">Select Credit</option>
+<option value="1">1.00 Credit</option>
+<option value="1.5">1.50 Credits</option>
+<option value="2">2.00 Credits</option>
+<option value="2.5">2.50 Credits</option>
+<option value="3">3.00 Credits</option>
+<option value="3.5">3.50 Credits</option>
+<option value="4">4.00 Credits</option>
+<option value="5">5.00 Credits</option>
+</select>
+
+</div>
+
 </div>
 
 <br>
@@ -427,7 +447,7 @@ SELECT * FROM courses
 
                     <tr>
 
-                        <td colspan="5" class="text-center text-danger">
+                        <td colspan="6" class="text-center text-danger">
 
                             No Course Found
 

@@ -3,13 +3,6 @@
 |--------------------------------------------------------------------------
 | STUDENT RESULT NOTIFICATION COMPONENT
 |--------------------------------------------------------------------------
-|
-| Add this line inside the student's profile/dashboard:
-|
-| include 'student_result_notifications.php';
-|
-| If the profile is in another folder, adjust the include path.
-|--------------------------------------------------------------------------
 */
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -21,13 +14,15 @@ if (
     is_numeric($_SESSION['student_id'])
 ) {
 
-    $student_id =
-        (int) $_SESSION['student_id'];
+    $student_id = (int) $_SESSION['student_id'];
+
 
     /*
-     * The table is created by admin/publish-result.php
-     * when the first final result is published.
-     */
+    |--------------------------------------------------------------------------
+    | CHECK NOTIFICATION TABLE
+    |--------------------------------------------------------------------------
+    */
+
     $notification_table_exists = false;
 
     $table_check = mysqli_query(
@@ -43,7 +38,15 @@ if (
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | GET STUDENT NOTIFICATIONS
+    |--------------------------------------------------------------------------
+    */
+
     if ($notification_table_exists) {
+
+        $student_notifications = [];
 
         $stmt_notifications = mysqli_prepare(
             $conn,
@@ -56,13 +59,9 @@ if (
                 created_at
              FROM student_notifications
              WHERE student_id = ?
-             ORDER BY
-                is_read ASC,
-                notification_id DESC
+             ORDER BY is_read ASC, notification_id DESC
              LIMIT 10"
         );
-
-        $student_notifications = [];
 
         if ($stmt_notifications) {
 
@@ -72,315 +71,504 @@ if (
                 $student_id
             );
 
-            mysqli_stmt_execute(
-                $stmt_notifications
-            );
+            mysqli_stmt_execute($stmt_notifications);
 
             $notification_result =
-                mysqli_stmt_get_result(
-                    $stmt_notifications
-                );
+                mysqli_stmt_get_result($stmt_notifications);
 
             while (
                 $notification_row =
-                mysqli_fetch_assoc(
-                    $notification_result
-                )
+                mysqli_fetch_assoc($notification_result)
             ) {
-
-                $student_notifications[] =
-                    $notification_row;
+                $student_notifications[] = $notification_row;
             }
 
-            mysqli_stmt_close(
-                $stmt_notifications
-            );
+            mysqli_stmt_close($stmt_notifications);
         }
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | COUNT UNREAD NOTIFICATIONS
+        |--------------------------------------------------------------------------
+        */
 
         $unread_count = 0;
 
-        foreach (
-            $student_notifications
-            as $notification
-        ) {
+        foreach ($student_notifications as $notification) {
 
-            if (
-                (int)
-                $notification['is_read']
-                === 0
-            ) {
+            if ((int) $notification['is_read'] === 0) {
                 $unread_count++;
             }
+
         }
 
-        ?>
+?>
 
-        <div class="card shadow-sm mb-4"
-             style="
-                border:0;
-                border-radius:15px;
-                overflow:hidden;
-             ">
+<style>
 
-            <div
-                class="card-header text-white d-flex
-                       justify-content-between
-                       align-items-center"
-                style="
-                    background:linear-gradient(
-                        135deg,
-                        #2563eb,
-                        #1d4ed8
-                    );
+/* ==========================================
+   NOTIFICATION CARD
+========================================== */
+
+.result-notification-card {
+    border: 0;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+
+/* ==========================================
+   MESSAGE MOVING AREA
+========================================== */
+
+.notification-marquee {
+    width: 100%;
+    height: 32px;
+    overflow: hidden;
+    position: relative;
+    white-space: nowrap;
+    margin-top: 8px;
+}
+
+
+/* ==========================================
+   SLOW MOVING MESSAGE
+========================================== */
+
+.notification-moving-message {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    display: inline-block;
+    white-space: nowrap;
+
+    font-size: 16px;
+    color: #4b5563;
+
+    line-height: 32px;
+
+    will-change: transform;
+
+    /* ধীরে ধীরে move হবে */
+    animation: slowMove 20s linear infinite;
+}
+
+
+/* ==========================================
+   SMOOTH RIGHT TO LEFT MOVEMENT
+========================================== */
+
+@keyframes slowMove {
+
+    0% {
+        transform: translateX(100%);
+    }
+
+    100% {
+        transform: translateX(-100%);
+    }
+
+}
+
+
+/* ==========================================
+   HOVER করলে PAUSE হবে
+========================================== */
+
+.notification-marquee:hover
+.notification-moving-message {
+    animation-play-state: paused;
+}
+
+
+/* ==========================================
+   MOBILE RESPONSIVE
+========================================== */
+
+@media (max-width: 768px) {
+
+    .notification-moving-message {
+        font-size: 14px;
+        animation-duration: 18s;
+    }
+
+}
+
+</style>
+
+
+<!-- ==========================================
+     RESULT NOTIFICATION CARD
+========================================== -->
+
+<div class="card shadow-sm mb-4 result-notification-card">
+
+
+    <!-- HEADER -->
+
+    <div
+        class="
+            card-header
+            text-white
+            d-flex
+            justify-content-between
+            align-items-center
+        "
+        style="
+            background:
+            linear-gradient(
+                135deg,
+                #198754,
+                #157347
+            );
+
+            padding: 14px 22px;
+        "
+    >
+
+
+        <div>
+
+            <i
+                class="
+                    fa-solid
+                    fa-bell
+                    me-2
+                "
+            ></i>
+
+            <strong style="font-size: 18px;">
+                Result Notifications
+            </strong>
+
+        </div>
+
+
+        <!-- UNREAD COUNT -->
+
+        <?php if ($unread_count > 0): ?>
+
+            <span
+                class="
+                    badge
+                    bg-danger
+                    rounded-pill
                 "
             >
+                <?= $unread_count ?> New
+            </span>
 
-                <div>
+        <?php endif; ?>
 
-                    <i
-                        class="fa-solid fa-bell me-2"
-                    ></i>
 
-                    <strong>
-                        Notifications
-                    </strong>
+    </div>
 
-                </div>
 
-                <?php if (
-                    $unread_count > 0
-                ): ?>
+    <!-- ==========================================
+         CARD BODY
+    =========================================== -->
 
-                    <span
-                        class="badge bg-danger"
-                    >
+    <div class="card-body p-3">
+
+
+        <?php if (count($student_notifications) > 0): ?>
+
+
+            <?php foreach (
+                $student_notifications
+                as $notification
+            ): ?>
+
+
+                <!-- SINGLE NOTIFICATION -->
+
+                <div
+                    class="mb-3"
+                    style="
+                        padding: 20px;
+                        border: 1px solid #d1d5db;
+                        border-radius: 14px;
+
+                        background:
                         <?=
-                        $unread_count
+                        (int) $notification['is_read'] === 0
+                        ? '#f8fafc'
+                        : '#ffffff';
                         ?>
-                        New
-                    </span>
-
-                <?php endif; ?>
-
-            </div>
+                        ;
+                    "
+                >
 
 
-            <div class="card-body p-0">
+                    <div
+                        class="
+                            d-flex
+                            justify-content-between
+                            align-items-start
+                            gap-3
+                        "
+                    >
 
-                <?php if (
-                    count(
-                        $student_notifications
-                    ) > 0
-                ): ?>
 
-                    <?php foreach (
-                        $student_notifications
-                        as $notification
-                    ): ?>
+                        <!-- LEFT SIDE -->
 
                         <div
                             style="
-                                padding:18px 20px;
-                                border-bottom:
-                                    1px solid #e5e7eb;
-                                background:
-                                    <?=
-                                    (int)
-                                    $notification[
-                                        'is_read'
-                                    ] === 0
-                                    ? '#eff6ff'
-                                    : '#ffffff';
-                                    ?>;
+                                flex: 1;
+                                min-width: 0;
                             "
                         >
 
+
+                            <!-- TITLE -->
+
                             <div
-                                class="d-flex
-                                       justify-content-between
-                                       gap-3"
+                                class="
+                                    d-flex
+                                    align-items-center
+                                    gap-2
+                                "
                             >
 
-                                <div>
-
-                                    <div
-                                        style="
-                                            font-weight:700;
-                                            color:#111827;
-                                            font-size:16px;
-                                        "
-                                    >
-
-                                        <?php
-                                        echo htmlspecialchars(
-                                            $notification[
-                                                'title'
-                                            ]
-                                        );
-                                        ?>
-
-                                        <?php if (
-                                            (int)
-                                            $notification[
-                                                'is_read'
-                                            ] === 0
-                                        ): ?>
-
-                                            <span
-                                                class="badge
-                                                       bg-primary
-                                                       ms-2"
-                                            >
-                                                NEW
-                                            </span>
-
-                                        <?php endif; ?>
-
-                                    </div>
+                                <i
+                                    class="
+                                        fa-solid
+                                        fa-circle-check
+                                    "
+                                    style="
+                                        color: #198754;
+                                        font-size: 22px;
+                                    "
+                                ></i>
 
 
-                                    <div
-                                        style="
-                                            color:#4b5563;
-                                            margin-top:6px;
-                                        "
-                                    >
-
-                                        <?php
-                                        echo htmlspecialchars(
-                                            $notification[
-                                                'message'
-                                            ]
-                                        );
-                                        ?>
-
-                                    </div>
-
-
-                                    <small
-                                        class="text-muted"
-                                    >
-
-                                        <?php
-                                        echo htmlspecialchars(
-                                            $notification[
-                                                'created_at'
-                                            ]
-                                        );
-                                        ?>
-
-                                    </small>
-
-                                </div>
-
-
-                                <div
-                                    class="d-flex
-                                           align-items-center"
+                                <span
+                                    style="
+                                        font-size: 20px;
+                                        font-weight: 700;
+                                        color: #2f6655;
+                                    "
                                 >
 
-                                    <a
-                                        href="<?=
-                                        htmlspecialchars(
-                                            $notification[
-                                                'link'
-                                            ]
-                                        )
-                                        ?>"
-                                        class="btn
-                                               btn-primary
-                                               btn-sm"
-                                        onclick="
-                                            markResultNotificationRead(
-                                                <?=
-                                                (int)
-                                                $notification[
-                                                    'notification_id'
-                                                ]
-                                                ?>
-                                            );
+                                    <?php
+                                    echo htmlspecialchars(
+                                        $notification['title']
+                                    );
+                                    ?>
+
+                                </span>
+
+
+                                <?php if (
+                                    (int) $notification['is_read'] === 0
+                                ): ?>
+
+                                    <span
+                                        class="
+                                            badge
+                                            bg-primary
                                         "
                                     >
+                                        NEW
+                                    </span>
 
-                                        <i
-                                            class="fa-solid
-                                                   fa-eye me-1"
-                                        ></i>
+                                <?php endif; ?>
 
-                                        Click Now for See
 
-                                    </a>
+                            </div>
+
+
+                            <!-- ==========================================
+                                 SLOW MOVING MESSAGE
+                            =========================================== -->
+
+                            <div class="notification-marquee">
+
+                                <div
+                                    class="
+                                        notification-moving-message
+                                    "
+                                >
+
+                                    <?php
+                                    echo htmlspecialchars(
+                                        $notification['message']
+                                    );
+                                    ?>
 
                                 </div>
 
                             </div>
 
+
+                            <!-- DATE -->
+
+                            <div
+                                class="
+                                    mt-2
+                                    text-muted
+                                "
+                                style="
+                                    font-size: 14px;
+                                "
+                            >
+
+                                <?php
+                                echo htmlspecialchars(
+                                    $notification['created_at']
+                                );
+                                ?>
+
+                            </div>
+
+
                         </div>
 
-                    <?php endforeach; ?>
 
-                <?php else: ?>
+                        <!-- RIGHT SIDE -->
 
-                    <div
-                        class="text-center
-                               text-muted"
-                        style="
-                            padding:30px;
-                        "
-                    >
+                        <div
+                            class="
+                                d-flex
+                                flex-column
+                                align-items-end
+                                gap-2
+                            "
+                        >
 
-                        <i
-                            class="fa-solid
-                                   fa-bell-slash
-                                   fa-2x
-                                   mb-2"
-                        ></i>
 
-                        <div>
-                            No new notifications.
+                            <!-- VIEW RESULT BUTTON -->
+
+                            <a
+                                href="<?=
+                                htmlspecialchars(
+                                    $notification['link']
+                                )
+                                ?>"
+                                class="
+                                    btn
+                                    btn-success
+                                    btn-sm
+                                "
+                                onclick="
+                                    markResultNotificationRead(
+                                        <?=
+                                        (int)
+                                        $notification[
+                                            'notification_id'
+                                        ]
+                                        ?>
+                                    );
+                                "
+                                style="
+                                    font-weight: 600;
+                                "
+                            >
+
+                                View Result & Marksheet
+
+                                <i
+                                    class="
+                                        fa-solid
+                                        fa-arrow-right
+                                        ms-1
+                                    "
+                                ></i>
+
+                            </a>
+
+
                         </div>
+
 
                     </div>
 
-                <?php endif; ?>
+
+                </div>
+
+
+            <?php endforeach; ?>
+
+
+        <?php else: ?>
+
+
+            <!-- NO NOTIFICATION -->
+
+            <div
+                class="
+                    text-center
+                    text-muted
+                "
+                style="
+                    padding: 40px;
+                "
+            >
+
+                <i
+                    class="
+                        fa-solid
+                        fa-bell-slash
+                        fa-2x
+                        mb-3
+                    "
+                ></i>
+
+                <div>
+                    No new notifications.
+                </div>
 
             </div>
 
-        </div>
+
+        <?php endif; ?>
 
 
-        <script>
+    </div>
 
-        function
-        markResultNotificationRead(
-            notificationId
-        ) {
 
-            /*
-             * This uses a small GET request to the same
-             * profile page. The result still opens normally.
-             *
-             * If your profile has its own notification-read
-             * endpoint, you can replace this later.
-             */
+</div>
 
-            const url =
-                "mark_result_notification_read.php?id="
-                + encodeURIComponent(
-                    notificationId
-                );
 
-            fetch(url, {
-                method: "GET",
-                credentials: "same-origin"
-            }).catch(function () {
-                // The result page still opens.
-            });
+<!-- ==========================================
+     MARK NOTIFICATION AS READ
+========================================== -->
+
+<script>
+
+function markResultNotificationRead(notificationId) {
+
+    const url =
+        "mark_result_notification_read.php?id="
+        + encodeURIComponent(notificationId);
+
+    fetch(
+        url,
+        {
+            method: "GET",
+            credentials: "same-origin"
         }
+    )
+    .catch(function () {
 
-        </script>
+        /*
+         * Request fail হলেও
+         * Result page normally open হবে।
+         */
 
-        <?php
-    }
+    });
+
 }
+
+</script>
+
+
+<?php
+
+    }
+
+}
+
+?>

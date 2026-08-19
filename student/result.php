@@ -212,7 +212,8 @@ $result_sql = "
 
         e.course_id,
 
-        c.course_name
+        c.course_name,
+        c.credit
 
     FROM results r
 
@@ -254,6 +255,8 @@ $total_marks = 0;
 
 $total_grade_points = 0;
 
+$total_credits = 0;
+
 $passed_courses = 0;
 
 $cgpa = 0;
@@ -281,14 +284,18 @@ if ($result_query) {
         $grade_point =
             getGradePoint($marks);
 
+        $credit = (float)($row['credit'] ?? 0);
+
 
         $total_courses++;
 
         $total_marks += $marks;
 
-        // Only passed courses are included in CGPA calculation
-        if ($grade !== "F") {
-            $total_grade_points += $grade_point;
+        // Only passed courses are included in CGPA calculation.
+        // CGPA is weighted by each course's credit.
+        if ($grade !== "F" && $credit > 0) {
+            $total_grade_points += ($grade_point * $credit);
+            $total_credits += $credit;
             $passed_courses++;
         }
 
@@ -309,11 +316,11 @@ if ($result_query) {
    CALCULATE CGPA
 ================================================== */
 
-if ($passed_courses > 0) {
+if ($total_credits > 0) {
 
     $cgpa =
         $total_grade_points /
-        $passed_courses;
+        $total_credits;
 
 }
 
@@ -335,21 +342,34 @@ $dept_id = (int)$student['department_id'];
 $department_merit_sql = "
     SELECT
         r.student_id,
-        ROUND(AVG(
-            CASE
-                WHEN r.marks >= 80 THEN 4.00
-                WHEN r.marks >= 75 THEN 3.75
-                WHEN r.marks >= 70 THEN 3.50
-                WHEN r.marks >= 65 THEN 3.25
-                WHEN r.marks >= 60 THEN 3.00
-                WHEN r.marks >= 55 THEN 2.75
-                WHEN r.marks >= 50 THEN 2.50
-                WHEN r.marks >= 45 THEN 2.25
-                WHEN r.marks >= 40 THEN 2.00
-                ELSE NULL
-            END
-        ), 2) AS overall_cgpa
+        ROUND(
+            SUM(
+                CASE
+                    WHEN r.marks >= 80 THEN 4.00 * c.credit
+                    WHEN r.marks >= 75 THEN 3.75 * c.credit
+                    WHEN r.marks >= 70 THEN 3.50 * c.credit
+                    WHEN r.marks >= 65 THEN 3.25 * c.credit
+                    WHEN r.marks >= 60 THEN 3.00 * c.credit
+                    WHEN r.marks >= 55 THEN 2.75 * c.credit
+                    WHEN r.marks >= 50 THEN 2.50 * c.credit
+                    WHEN r.marks >= 45 THEN 2.25 * c.credit
+                    WHEN r.marks >= 40 THEN 2.00 * c.credit
+                    ELSE 0
+                END
+            ) / NULLIF(
+                SUM(
+                    CASE
+                        WHEN r.marks >= 40 THEN c.credit
+                        ELSE 0
+                    END
+                ), 0
+            ), 2
+        ) AS overall_cgpa
     FROM results r
+    LEFT JOIN exams e
+        ON r.exam_id = e.exam_id
+    LEFT JOIN courses c
+        ON e.course_id = c.course_id
     WHERE r.department_id = '$dept_id'
       AND r.status = 'Published'
     GROUP BY r.student_id
@@ -1200,6 +1220,7 @@ body {
                         <thead>
                             <tr>
                                 <th>Course</th>
+                                <th>Credit</th>
                                 <th>Marks</th>
                                 <th>Grade</th>
                                 <th>Grade Point</th>
@@ -1214,21 +1235,41 @@ body {
                             $grade_class = gradeClass($grade);
                         ?>
                             <tr>
+                                <!-- Course -->
                                 <td>
-                                    <?php echo !empty($result['course_name'])
+                                    <?php
+                                    echo !empty($result['course_name'])
                                         ? htmlspecialchars($result['course_name'])
-                                        : 'Course Not Found'; ?>
+                                        : 'Course Not Found';
+                                    ?>
                                 </td>
+
+                                <!-- Credit -->
                                 <td>
-                                    <strong><?php echo number_format($marks, 2); ?></strong> / 100
+                                    <strong>
+                                        <?php echo number_format((float)($result['credit'] ?? 0), 2); ?>
+                                    </strong>
                                 </td>
+
+                                <!-- Marks -->
+                                <td>
+                                    <strong>
+                                        <?php echo number_format($marks, 2); ?>
+                                    </strong> / 100
+                                </td>
+
+                                <!-- Grade -->
                                 <td>
                                     <span class="badge bg-<?php echo $grade_class; ?> fs-6">
-                                        <?php echo $grade; ?>
+                                        <?php echo htmlspecialchars($grade); ?>
                                     </span>
                                 </td>
+
+                                <!-- Grade Point -->
                                 <td>
-                                    <strong><?php echo number_format($grade_point, 2); ?></strong>
+                                    <strong>
+                                        <?php echo number_format($grade_point, 2); ?>
+                                    </strong>
                                 </td>
                             </tr>
                         <?php } ?>
@@ -1238,12 +1279,12 @@ body {
                             <tr class="table-light fw-bold">
                                 <td colspan="2" class="text-end">Total Marks</td>
                                 <td><?php echo number_format($total_marks, 2); ?></td>
-                                <td><?php echo $total_courses; ?> Courses</td>
+                                <td colspan="2"><?php echo $total_courses; ?> Courses | <?php echo number_format($total_credits, 2); ?> Passed Credits</td>
                             </tr>
 
                             <tr class="table-warning fw-bold">
                                 <td colspan="2" class="text-end">Merit Position</td>
-                                <td colspan="2">
+                                <td colspan="3">
                                     <?php echo $merit_position !== null ? getOrdinal($merit_position) : 'N/A'; ?>
                                     <?php if ($total_students_ranked > 0) { ?>
                                         <span class="ms-2">Out of <?php echo $total_students_ranked; ?> Students</span>
@@ -1254,7 +1295,7 @@ body {
                             <tr class="table-success fw-bold">
                                 <td colspan="2" class="text-end">CGPA</td>
                                 <td><?php echo number_format($cgpa, 2); ?></td>
-                                <td>Overall CGPA: <?php echo number_format($cgpa, 2); ?></td>
+                                <td colspan="2">Overall CGPA: <?php echo number_format($cgpa, 2); ?></td>
                             </tr>
                         </tfoot>
 

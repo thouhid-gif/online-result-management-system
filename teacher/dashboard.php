@@ -959,17 +959,6 @@ if ($stmt_pending) {
         </a>
 
 
-        <!-- RESULTS -->
-
-        <a href="results.php">
-
-            <i class="fa-solid fa-chart-column"></i>
-
-            <span>
-                Results
-            </span>
-
-        </a>
 
 
         <!-- ==================================================
@@ -1199,16 +1188,6 @@ if ($stmt_pending) {
 
             <!-- RESULTS -->
 
-            <a
-                href="results.php"
-                class="action-btn purple"
-            >
-
-                <i class="fa-solid fa-chart-column"></i>
-
-                View Results
-
-            </a>
 
 
             <!-- ==================================================

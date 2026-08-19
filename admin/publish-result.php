@@ -890,7 +890,7 @@ $semester_result =
 
                 <div class="page-title">
 
-                    🎓 Bulk Final Result Publish
+                    🎓  Final Result Publish
 
                 </div>
 

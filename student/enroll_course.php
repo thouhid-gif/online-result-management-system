@@ -1359,21 +1359,3 @@ body {
 
 </html>
 ```
-
-**একটা জিনিস নিশ্চিত করুন:** আপনার `courses` table-এ এই ৪টি column থাকতে হবে:
-
-```text
-course_id
-course_name
-department_id
-semester_id
-```
-
-কারণ course filtering এইভাবে হচ্ছে:
-
-```php
-WHERE department_id = student_department_id
-AND semester_id = student_semester_id
-```
-
-তাহলেই একজন **CSE 5th semester** student শুধু **CSE + 5th semester-এর course** দেখতে পারবে এবং সেগুলো থেকে enroll করতে পারবে।
